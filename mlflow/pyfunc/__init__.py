@@ -406,6 +406,7 @@ from mlflow.exceptions import MlflowException
 from mlflow.models import Model, ModelInputExample, ModelSignature
 from mlflow.models.flavor_backend_registry import get_flavor_backend
 from mlflow.models.model import _DATABRICKS_FS_LOADER_MODULE, MLMODEL_FILE_NAME
+from mlflow.models.resources import Resource
 from mlflow.models.signature import (
     _infer_signature_from_input_example,
     _infer_signature_from_type_hints,
@@ -2058,6 +2059,7 @@ def save_model(
     metadata=None,
     model_config=None,
     example_no_conversion=False,
+    resources: Resource = None,
     **kwargs,
 ):
     """
@@ -2334,6 +2336,14 @@ def save_model(
         _save_example(mlflow_model, input_example, path, example_no_conversion)
     if metadata is not None:
         mlflow_model.metadata = metadata
+    if resources is not None:
+        def serialize_resources(resources):
+            combined_resources = {}
+            for resource in resources:
+                combined_resources.update(resource.to_dict())
+            return combined_resources
+
+        mlflow_model.resources = serialize_resources(resources)
 
     if first_argument_set_specified:
         return _save_model_with_loader_module_and_data_path(
@@ -2382,6 +2392,7 @@ def log_model(
     metadata=None,
     model_config=None,
     example_no_conversion=False,
+    resources: Resource = None,
 ):
     """
     Log a Pyfunc model with custom inference logic and optional data dependencies as an MLflow
@@ -2559,6 +2570,7 @@ def log_model(
         metadata=metadata,
         model_config=model_config,
         example_no_conversion=example_no_conversion,
+        resources=resources,
     )
 
 
